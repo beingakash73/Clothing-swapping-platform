@@ -155,4 +155,31 @@ public class MarketplaceApiIntegrationTests {
                 .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(4))))
                 .andExpect(jsonPath("$[0].name", notNullValue()));
     }
+
+    @Test
+    void testClothesUploadEndpoints() throws Exception {
+        // 1. Get all clothes uploads
+        mockMvc.perform(get("/api/clothes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", notNullValue()));
+
+        // 2. Upload clothes via multipart mock
+        mockMvc.perform(multipart("/api/clothes/list")
+                        .param("title", "Eco Recycled Denim Jacket")
+                        .param("category", "Jackets & Coats")
+                        .param("size", "L")
+                        .param("originalPrice", "120.0")
+                        .param("ownerId", "user_maya"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("Eco Recycled Denim Jacket"))
+                .andExpect(jsonPath("$.ownerName").value("Maya Lin"))
+                .andExpect(jsonPath("$.ecoSavedKgCo2", greaterThan(0.0)))
+                .andExpect(jsonPath("$.images", not(empty())));
+
+        // 3. Verify item also synchronized to main marketplace items endpoint
+        mockMvc.perform(get("/api/items").param("search", "Eco Recycled Denim Jacket"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", not(empty())));
+    }
 }
+
