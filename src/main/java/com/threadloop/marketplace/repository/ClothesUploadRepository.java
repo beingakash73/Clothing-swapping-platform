@@ -1,5 +1,9 @@
 package com.threadloop.marketplace.repository;
 
-public interface ClothesUploadRepository {
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import com.threadloop.marketplace.model.ClothesUpload;
+
+public interface ClothesUploadRepository extends MongoRepository<ClothesUpload, String> {
 
 }
