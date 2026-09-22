@@ -35,7 +35,7 @@ public class ClothesUploadController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PostMapping(value = {"", "/list", "/upload"}, consumes = {"multipart/form-data"})
+    @PostMapping(value = { "", "/list", "/upload" }, consumes = { "multipart/form-data" })
     public ResponseEntity<ClothesUploadDto> listClothesMultipart(
             @RequestParam(value = "title", required = false, defaultValue = "Untitled Garment") String title,
             @RequestParam(value = "description", required = false, defaultValue = "") String description,

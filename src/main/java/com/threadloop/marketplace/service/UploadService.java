@@ -31,9 +31,9 @@ public class UploadService {
     private final Cloudinary cloudinary;
 
     public UploadService(ClothesUploadRepository clothesUploadRepository,
-                         ClothingItemRepository clothingItemRepository,
-                         UserRepository userRepository,
-                         Cloudinary cloudinary) {
+            ClothingItemRepository clothingItemRepository,
+            UserRepository userRepository,
+            Cloudinary cloudinary) {
         this.clothesUploadRepository = clothesUploadRepository;
         this.clothingItemRepository = clothingItemRepository;
         this.userRepository = userRepository;
@@ -42,7 +42,8 @@ public class UploadService {
 
     /**
      * Upload images to Cloudinary and persist listing to both clothes_upload
-     * and the central clothing_items repository so the entire platform stays in sync.
+     * and the central clothing_items repository so the entire platform stays in
+     * sync.
      */
     @Transactional
     public ClothesUploadDto uploadClothesListing(
@@ -63,8 +64,7 @@ public class UploadService {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> result = cloudinary.uploader().upload(
                             file.getBytes(),
-                            ObjectUtils.asMap("folder", "threadloop/clothes")
-                    );
+                            ObjectUtils.asMap("folder", "threadloop/clothes"));
                     String url = (String) result.get("secure_url");
                     String publicId = (String) result.get("public_id");
                     if (url != null) {
@@ -88,7 +88,7 @@ public class UploadService {
         }
         // Fallback default image if none provided
         if (imageUrls.isEmpty()) {
-            imageUrls.add(DEFAULT_IMAGE);
+            imageUrls.add("Plz Upload Image/jpg/png/jpeg/webp");
         }
 
         // 2) Resolve Owner
@@ -153,7 +153,8 @@ public class UploadService {
 
         ClothesUpload saved = clothesUploadRepository.save(entity);
 
-        // 5) Synchronize with central ClothingItem repository for full platform integration
+        // 5) Synchronize with central ClothingItem repository for full platform
+        // integration
         ClothingItem item = new ClothingItem(
                 itemId,
                 entity.getTitle(),
@@ -176,8 +177,7 @@ public class UploadService {
                 tags,
                 co2,
                 water,
-                createdAt
-        );
+                createdAt);
         clothingItemRepository.save(item);
 
         return toDto(saved);
