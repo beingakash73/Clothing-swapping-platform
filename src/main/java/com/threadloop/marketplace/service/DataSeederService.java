@@ -3,6 +3,7 @@ package com.threadloop.marketplace.service;
 import com.threadloop.marketplace.model.*;
 import com.threadloop.marketplace.repository.*;
 import jakarta.annotation.PostConstruct;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class DataSeederService {
     private final DisputeRepository disputeRepository;
     private final MeetupHubRepository meetupHubRepository;
     private final PlatformKPIRepository platformKPIRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public DataSeederService(UserRepository userRepository,
                              BadgeRepository badgeRepository,
@@ -27,7 +29,8 @@ public class DataSeederService {
                              ChatMessageRepository chatMessageRepository,
                              DisputeRepository disputeRepository,
                              MeetupHubRepository meetupHubRepository,
-                             PlatformKPIRepository platformKPIRepository) {
+                             PlatformKPIRepository platformKPIRepository,
+                             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.badgeRepository = badgeRepository;
         this.clothingItemRepository = clothingItemRepository;
@@ -36,12 +39,21 @@ public class DataSeederService {
         this.disputeRepository = disputeRepository;
         this.meetupHubRepository = meetupHubRepository;
         this.platformKPIRepository = platformKPIRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
     public void init() {
         if (userRepository.count() == 0) {
             seedDatabase();
+        } else {
+            // Ensure any previously seeded users have a valid hashed password
+            userRepository.findAll().forEach(u -> {
+                if (u.getPassword() == null || u.getPassword().isBlank()) {
+                    u.setPassword(passwordEncoder.encode("password123"));
+                    userRepository.save(u);
+                }
+            });
         }
     }
 
@@ -65,6 +77,7 @@ public class DataSeederService {
                 new Location("Brooklyn", "NY", "11201", 40.6928, -73.9903),
                 4.95, 28, 16, 860, 43200, 88.0, 24.0, "2025-04-10"
         );
+        maya.setPassword(passwordEncoder.encode("password123"));
         userRepository.save(maya);
 
         badgeRepository.save(new Badge("b1", maya, "Circular Pioneer", "Sparkles", "Completed 15+ successful garment trades", "2025-11-12"));
@@ -78,6 +91,7 @@ public class DataSeederService {
                 new Location("Manhattan", "NY", "10002", 40.715, -73.986),
                 5.0, 34, 22, 920, 59400, 121.0, 33.0, "2025-02-14"
         );
+        leo.setPassword(passwordEncoder.encode("password123"));
         userRepository.save(leo);
 
         badgeRepository.save(new Badge("b4", leo, "Vintage Curator", "Clock", "10+ curated vintage items traded", "2025-08-20"));
@@ -90,6 +104,7 @@ public class DataSeederService {
                 new Location("Queens", "NY", "11101", 40.744, -73.948),
                 4.88, 15, 9, 710, 24300, 49.5, 13.5, "2025-06-22"
         );
+        sofia.setPassword(passwordEncoder.encode("password123"));
         userRepository.save(sofia);
 
         badgeRepository.save(new Badge("b6", sofia, "Capsule Curator", "Layers", "Swapped across all 4 seasons", "2026-03-01"));
@@ -101,6 +116,7 @@ public class DataSeederService {
                 new Location("Brooklyn", "NY", "11201", 40.6928, -73.9903),
                 5.0, 88, 40, 1200, 108000, 220.0, 60.0, "2024-01-01"
         );
+        admin.setPassword(passwordEncoder.encode("password123"));
         userRepository.save(admin);
 
         badgeRepository.save(new Badge("b7", admin, "Platform Moderator", "ShieldCheck", "Certified circular economy steward", "2024-01-01"));
