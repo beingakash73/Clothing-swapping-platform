@@ -88,7 +88,7 @@ public class UploadService {
         }
         // Fallback default image if none provided
         if (imageUrls.isEmpty()) {
-            imageUrls.add("Plz Upload Image/jpg/png/jpeg/webp");
+            imageUrls.add(DEFAULT_IMAGE);
         }
 
         // 2) Resolve Owner
