@@ -8,7 +8,12 @@ import com.threadloop.marketplace.model.Location;
 import com.threadloop.marketplace.model.User;
 import com.threadloop.marketplace.repository.BadgeRepository;
 import com.threadloop.marketplace.repository.UserRepository;
+import com.threadloop.marketplace.security.JwtTokenProvider;
+import com.threadloop.marketplace.security.UserPrincipal;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,15 +29,26 @@ public class AuthService {
     private final BadgeRepository badgeRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    public AuthService(UserRepository userRepository,
+                       BadgeRepository badgeRepository,
+                       UserService userService,
+                       PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider) {
+        this.userRepository = userRepository;
+        this.badgeRepository = badgeRepository;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     public AuthService(UserRepository userRepository,
                        BadgeRepository badgeRepository,
                        UserService userService,
                        PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.badgeRepository = badgeRepository;
-        this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+        this(userRepository, badgeRepository, userService, passwordEncoder, null);
     }
 
     @Transactional
@@ -91,7 +107,9 @@ public class AuthService {
         );
         badgeRepository.save(welcomeBadge);
 
-        session.setAttribute("userId", savedUser.getId());
+        if (session != null) {
+            session.setAttribute("userId", savedUser.getId());
+        }
         return userService.toDto(savedUser);
     }
 
@@ -126,25 +144,49 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
-        session.setAttribute("userId", user.getId());
+        if (session != null) {
+            session.setAttribute("userId", user.getId());
+        }
         return userService.toDto(user);
     }
 
-    public Optional<UserDto> getCurrentUser(HttpSession session) {
-        Object userIdObj = session.getAttribute("userId");
-        if (userIdObj == null) {
-            return Optional.empty();
+    public String generateTokenForUser(String userId) {
+        if (jwtTokenProvider == null) {
+            return "mock-jwt-token";
         }
-        String userId = (String) userIdObj;
-        return userRepository.findById(userId).map(userService::toDto);
+        return userRepository.findById(userId)
+                .map(u -> jwtTokenProvider.generateToken(u.getId(), u.getEmail(), u.getName()))
+                .orElseGet(() -> jwtTokenProvider.generateToken(userId, "", ""));
+    }
+
+    public Optional<UserDto> getCurrentUser(HttpSession session) {
+        // 1. Check SecurityContext (populated by JWT filter)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof UserPrincipal principal) {
+            return userRepository.findById(principal.getId()).map(userService::toDto);
+        }
+
+        // 2. Check Session fallback
+        if (session != null) {
+            Object userIdObj = session.getAttribute("userId");
+            if (userIdObj != null) {
+                String userId = (String) userIdObj;
+                return userRepository.findById(userId).map(userService::toDto);
+            }
+        }
+
+        return Optional.empty();
     }
 
     public void logout(HttpSession session) {
-        session.removeAttribute("userId");
-        try {
-            session.invalidate();
-        } catch (IllegalStateException ignored) {
-            // Already invalidated
+        SecurityContextHolder.clearContext();
+        if (session != null) {
+            session.removeAttribute("userId");
+            try {
+                session.invalidate();
+            } catch (IllegalStateException ignored) {
+                // Already invalidated
+            }
         }
     }
 }

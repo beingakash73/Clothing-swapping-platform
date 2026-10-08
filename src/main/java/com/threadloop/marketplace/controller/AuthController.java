@@ -27,8 +27,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpSession session) {
         try {
             UserDto userDto = authService.register(request, session);
+            String token = authService.generateTokenForUser(userDto.getId());
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(AuthResponse.success("Account created successfully", userDto));
+                    .body(AuthResponse.success("Account created successfully", userDto, token));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(AuthResponse.error(e.getMessage()));
         }
@@ -38,7 +39,8 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpSession session) {
         try {
             UserDto userDto = authService.login(request, session);
-            return ResponseEntity.ok(AuthResponse.success("Login successful", userDto));
+            String token = authService.generateTokenForUser(userDto.getId());
+            return ResponseEntity.ok(AuthResponse.success("Login successful", userDto, token));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(AuthResponse.error(e.getMessage()));
@@ -51,7 +53,7 @@ public class AuthController {
         return userDto
                 .map(user -> ResponseEntity.ok(AuthResponse.success("Authenticated user retrieved", user)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(AuthResponse.error("No active session")));
+                        .body(AuthResponse.error("No active session or valid token")));
     }
 
     @PostMapping("/logout")
