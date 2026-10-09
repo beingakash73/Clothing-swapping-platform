@@ -27,3 +27,5 @@ target/
 
 ### VS Code ###
 .vscode/
+### Local configuration (ignore) ###
+src/main/resources/application.properties
