@@ -23,7 +23,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/auth/register")
+    @PostMapping("/api/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpSession session) {
         try {
             UserDto userDto = authService.register(request, session);
@@ -35,7 +35,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/auth/login")
+    @PostMapping("/api/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpSession session) {
         try {
             UserDto userDto = authService.login(request, session);
@@ -47,7 +47,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/auth/me")
+    @GetMapping("/api/me")
     public ResponseEntity<AuthResponse> getCurrentUser(HttpSession session) {
         Optional<UserDto> userDto = authService.getCurrentUser(session);
         return userDto
@@ -56,7 +56,7 @@ public class AuthController {
                         .body(AuthResponse.error("No active session or valid token")));
     }
 
-    @PostMapping("/auth/logout")
+    @PostMapping("/api/logout")
     public ResponseEntity<AuthResponse> logout(HttpSession session) {
         authService.logout(session);
         return ResponseEntity.ok(AuthResponse.success("Logged out successfully", null));
