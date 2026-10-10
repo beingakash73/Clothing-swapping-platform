@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 
 @RestController
-@RequestMapping("/api/health")
+@RequestMapping("/health")
 public class HealthController {
 
     private final UserRepository userRepository;
@@ -27,8 +27,7 @@ public class HealthController {
                 "connected",
                 "Spring Data MongoDB",
                 count,
-                Instant.now().toString()
-        );
+                Instant.now().toString());
         return ResponseEntity.ok(response);
     }
 }
