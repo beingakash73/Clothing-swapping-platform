@@ -30,9 +30,9 @@ public class ItemController {
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String ownerId
-    ) {
-        List<ClothingItemDto> items = itemService.getItems(category, condition, brandTier, gender, status, search, ownerId);
+            @RequestParam(required = false) String ownerId) {
+        List<ClothingItemDto> items = itemService.getItems(category, condition, brandTier, gender, status, search,
+                ownerId);
         return ResponseEntity.ok(items);
     }
 
