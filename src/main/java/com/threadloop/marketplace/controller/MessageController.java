@@ -5,6 +5,8 @@ import com.threadloop.marketplace.dto.SendMessageRequest;
 import com.threadloop.marketplace.service.MessageService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,5 +31,15 @@ public class MessageController {
     public ResponseEntity<ChatMessageDto> sendMessage(@RequestBody SendMessageRequest request) {
         ChatMessageDto sent = messageService.sendMessage(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(sent);
+    }
+
+    @MessageMapping("/chat.sendMessage")
+    public ChatMessageDto handleWebSocketSendMessage(@Payload SendMessageRequest request) {
+        return messageService.sendMessage(request);
+    }
+
+    @MessageMapping("/messages")
+    public ChatMessageDto handleWebSocketMessage(@Payload SendMessageRequest request) {
+        return messageService.sendMessage(request);
     }
 }

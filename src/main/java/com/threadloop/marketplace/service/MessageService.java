@@ -8,6 +8,7 @@ import com.threadloop.marketplace.model.User;
 import com.threadloop.marketplace.repository.ChatMessageRepository;
 import com.threadloop.marketplace.repository.SwapProposalRepository;
 import com.threadloop.marketplace.repository.UserRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class MessageService {
     private final ChatMessageRepository chatMessageRepository;
     private final SwapProposalRepository swapProposalRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private static final String[] AUTO_REPLIES = {
             "Sounds great! I'll prepare the garment carefully and steam it before we trade.",
@@ -34,10 +36,12 @@ public class MessageService {
 
     public MessageService(ChatMessageRepository chatMessageRepository,
                           SwapProposalRepository swapProposalRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          SimpMessagingTemplate messagingTemplate) {
         this.chatMessageRepository = chatMessageRepository;
         this.swapProposalRepository = swapProposalRepository;
         this.userRepository = userRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public List<ChatMessageDto> getMessages(String swapId) {
@@ -74,6 +78,8 @@ public class MessageService {
         );
 
         ChatMessage saved = chatMessageRepository.save(msg);
+        ChatMessageDto sentDto = toDto(saved);
+        broadcastMessage(sentDto);
 
         // Async auto reply simulation from counterparty if applicable
         String senderId = request.getSenderId();
@@ -95,14 +101,27 @@ public class MessageService {
                             false,
                             null
                     );
-                    chatMessageRepository.save(reply);
+                    ChatMessage savedReply = chatMessageRepository.save(reply);
+                    broadcastMessage(toDto(savedReply));
                 } catch (Exception e) {
                     // Ignore background reply simulation error
                 }
             });
         }
 
-        return toDto(saved);
+        return sentDto;
+    }
+
+    public void broadcastMessage(ChatMessageDto dto) {
+        if (dto == null) return;
+        try {
+            if (dto.getSwapId() != null && !dto.getSwapId().isEmpty()) {
+                messagingTemplate.convertAndSend("/topic/messages/" + dto.getSwapId(), dto);
+            }
+            messagingTemplate.convertAndSend("/topic/messages", dto);
+        } catch (Exception e) {
+            // Log or ignore if broadcast fails
+        }
     }
 
     public ChatMessageDto toDto(ChatMessage m) {

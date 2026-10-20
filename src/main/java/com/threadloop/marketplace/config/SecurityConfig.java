@@ -77,6 +77,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/kpis/**").permitAll()
                         .requestMatchers("/api/hubs/**").permitAll()
                         .requestMatchers("/api/seed/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         // Allow read-only access to browse marketplace items & users
                         .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/users/**", "/api/clothes/**")
                         .permitAll()
