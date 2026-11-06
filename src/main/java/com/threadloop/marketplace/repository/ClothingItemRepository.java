@@ -9,10 +9,15 @@ import java.util.List;
 
 @Repository
 public interface ClothingItemRepository extends MongoRepository<ClothingItem, String> {
+
     @Query("{ 'owner.$id': ?0 }")
     List<ClothingItem> findByOwnerId(String ownerId);
 
     List<ClothingItem> findByStatus(String status);
 
     long countByStatus(String status);
+
+    // Search clothing by category and size, ignoring letter case.
+    @Query("{ 'category': { $regex: ?0, $options: 'i' }, 'size': { $regex: ?1, $options: 'i' }, 'status': 'available' }")
+    List<ClothingItem> searchAvailableClothes(String category, String size);
 }

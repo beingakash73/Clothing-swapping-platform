@@ -73,13 +73,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public auth and status endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/ai/**").permitAll()
                         .requestMatchers("/api/health/**").permitAll()
                         .requestMatchers("/api/kpis/**").permitAll()
                         .requestMatchers("/api/hubs/**").permitAll()
                         .requestMatchers("/api/seed/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         // Allow read-only access to browse marketplace items & users
-                        .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/users/**", "/api/clothes/**")
+                        .requestMatchers(HttpMethod.GET, "/api/items/**", "/api/users/**", "/api/clothes/**",
+                                "/api/ai/**")
                         .permitAll()
                         // Swaps, messages and mutate operations are protected or accessible
                         .anyRequest().permitAll());
